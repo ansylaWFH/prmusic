@@ -29,7 +29,7 @@ const ArrowRightIcon = ({ className }) => (
   </svg>
 );
 
-// Ensure the Paystack script is loaded.
+// This function loads the Paystack script, a prerequisite for payment processing.
 const loadPaystackScript = (callback) => {
   const existingScript = document.getElementById('paystack-script');
   if (!existingScript) {
@@ -45,7 +45,7 @@ const loadPaystackScript = (callback) => {
   }
 };
 
-// Custom Modal component to replace alerts
+// Custom Modal component to handle user feedback and replace alerts.
 const Modal = ({ show, title, message, onClose, icon }) => {
   if (!show) return null;
 
@@ -90,8 +90,8 @@ export default function App() {
   const [songLink, setSongLink] = useState('');
   const [email, setEmail] = useState('');
   const [postCount, setPostCount] = useState(10);
-  const [usdAmount, setUsdAmount] = useState(10); // Updated initial USD amount (10 posts * $1)
-  const [ghsAmount, setGhsAmount] = useState(120); // Updated initial GHS amount (10 posts * $1 * GHS12)
+  const [usdAmount, setUsdAmount] = useState(10);
+  const [ghsAmount, setGhsAmount] = useState(120);
   const [isPaystackLoaded, setIsPaystackLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -101,13 +101,13 @@ export default function App() {
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', message: '', icon: '' });
 
-  // Constants
+  // Constants for pricing and API keys.
   const DOLLAR_TO_GHS_RATE = 12;
-  const POST_COST_USD = 1; // New constant for post cost
+  const POST_COST_USD = 1;
   const PAYSTACK_PUBLIC_KEY = 'pk_live_87c3c567301e82e5685926742d23cb2458d4a1ae';
-  const WEBHOOK_URL = 'https://hook.eu2.make.com/pv8m1kitutexccwl1d1puc3u4rdno69p'; // Webhook URL is now a constant
+  const WEBHOOK_URL = 'https://hook.eu2.make.com/pv8m1kitutexccwl1d1puc3u4rdno69p';
 
-  // --- Firebase and Paystack Initialization ---
+  // Effect to initialize Firebase and Paystack.
   useEffect(() => {
     loadPaystackScript(() => {
       setIsPaystackLoaded(true);
@@ -153,12 +153,12 @@ export default function App() {
     initializeFirebase();
   }, []);
 
-  // --- Calculation Logic ---
+  // Recalculates total cost based on the number of posts.
   const handlePostCountChange = (e) => {
     const newCount = parseInt(e.target.value, 10);
     if (!isNaN(newCount) && newCount >= 10) {
       setPostCount(newCount);
-      const totalUsd = newCount * POST_COST_USD; // Use the new constant
+      const totalUsd = newCount * POST_COST_USD;
       setUsdAmount(totalUsd);
       setGhsAmount(totalUsd * DOLLAR_TO_GHS_RATE);
     } else {
@@ -168,6 +168,7 @@ export default function App() {
     }
   };
 
+  // Handles navigation to the next step of the form with validation.
   const handleNextStep = () => {
     if (step === 0 && !songLink) {
       setModalContent({ title: 'Input Required', message: 'Please enter your song link to proceed.', icon: 'error' });
@@ -187,11 +188,12 @@ export default function App() {
     setStep(step + 1);
   };
 
+  // Handles navigation to the previous step.
   const handlePreviousStep = () => {
     setStep(step - 1);
   };
 
-  // --- Payment Handling and Firestore & Webhook Integration ---
+  // Initiates the Paystack payment process and handles callbacks.
   const handlePaystackPayment = async () => {
     if (!isPaystackLoaded || !songLink || !email || postCount < 10 || !isAuthReady) {
       setModalContent({ title: 'Error', message: 'Please fill out all fields and ensure the number of posts is at least 10.', icon: 'error' });
@@ -203,7 +205,7 @@ export default function App() {
       const handler = window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: email,
-        amount: ghsAmount * 100,
+        amount: ghsAmount * 100, // Amount in kobo
         currency: 'GHS',
         metadata: {
           custom_fields: [
@@ -226,7 +228,7 @@ export default function App() {
             status: 'paid',
           };
 
-          // Save to Firestore
+          // Save data to Firestore database.
           if (db && userId) {
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
             const promoRequestRef = doc(db, `/artifacts/${appId}/users/${userId}/promo-requests`, transactionRef);
@@ -236,7 +238,7 @@ export default function App() {
             console.error("Firestore not initialized or user not authenticated. Data not saved.");
           }
 
-          // Send to webhook with exponential backoff
+          // Send data to the Make.com webhook with retries.
           if (WEBHOOK_URL) {
             const maxRetries = 5;
             let currentRetry = 0;
