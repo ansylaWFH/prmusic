@@ -26,7 +26,6 @@ const ArrowRightIcon = ({ className }) => (
   </svg>
 );
 
-// This function loads the Paystack script, a prerequisite for payment processing.
 const loadPaystackScript = (callback) => {
   const existingScript = document.getElementById('paystack-script');
   if (!existingScript) {
@@ -42,7 +41,6 @@ const loadPaystackScript = (callback) => {
   }
 };
 
-// Custom Modal component to handle user feedback and replace alerts.
 const Modal = ({ show, title, message, onClose, icon }) => {
   if (!show) return null;
 
@@ -81,7 +79,6 @@ const Modal = ({ show, title, message, onClose, icon }) => {
   );
 };
 
-// Main App component
 export default function App() {
   const [step, setStep] = useState(0);
   const [songLink, setSongLink] = useState('');
@@ -93,20 +90,19 @@ export default function App() {
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', message: '', icon: '' });
 
-  // Constants for pricing and API keys.
   const DOLLAR_TO_GHS_RATE = 12;
   const POST_COST_USD = 1;
+  // Hard-coded public and private keys as requested.
   const PAYSTACK_PUBLIC_KEY = 'pk_live_87c3c567301e82e5685926742d23cb2458d4a1ae';
+  const PAYSTACK_PRIVATE_KEY = 'sk_live_943f8ba2fb112470655eee1f06c926667fa27081'; // WARNING: This is a security risk.
   const WEBHOOK_URL = 'https://hook.eu2.make.com/pv8m1kitutexccwl1d1puc3u4rdno69p';
 
-  // Effect to initialize Paystack.
   useEffect(() => {
     loadPaystackScript(() => {
       setIsPaystackLoaded(true);
     });
   }, []);
 
-  // Recalculates total cost based on the number of posts.
   const handlePostCountChange = (e) => {
     const newCount = parseInt(e.target.value, 10);
     if (!isNaN(newCount) && newCount >= 10) {
@@ -121,7 +117,6 @@ export default function App() {
     }
   };
 
-  // Handles navigation to the next step of the form with validation.
   const handleNextStep = () => {
     if (step === 0 && !songLink) {
       setModalContent({ title: 'Input Required', message: 'Please enter your song link to proceed.', icon: 'error' });
@@ -141,12 +136,10 @@ export default function App() {
     setStep(step + 1);
   };
 
-  // Handles navigation to the previous step.
   const handlePreviousStep = () => {
     setStep(step - 1);
   };
 
-  // Initiates the Paystack payment process and handles callbacks.
   const handlePaystackPayment = async () => {
     if (!isPaystackLoaded || !songLink || !email || postCount < 10) {
       setModalContent({ title: 'Error', message: 'Please fill out all fields and ensure the number of posts is at least 10.', icon: 'error' });
@@ -181,7 +174,6 @@ export default function App() {
             status: 'paid',
           };
 
-          // Send data to the Make.com webhook with retries.
           if (WEBHOOK_URL) {
             const maxRetries = 5;
             let currentRetry = 0;
