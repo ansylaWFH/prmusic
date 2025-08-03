@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
@@ -30,6 +31,9 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './public/index.html',
     }),
+    new webpack.DefinePlugin({
+      'process.env.REACT_APP_PAYSTACK_PUBLIC_KEY': JSON.stringify(process.env.REACT_APP_PAYSTACK_PUBLIC_KEY)
+    })
   ],
   devServer: {
     historyApiFallback: true,
