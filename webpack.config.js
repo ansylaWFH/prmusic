@@ -6,6 +6,10 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: 'bundle.js',
+    publicPath: '/'
+  },
+  resolve: {
+    extensions: ['.js', '.jsx'],
   },
   module: {
     rules: [
@@ -14,9 +18,6 @@ module.exports = {
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env', '@babel/preset-react']
-          }
         }
       },
       {
@@ -31,8 +32,9 @@ module.exports = {
     }),
   ],
   devServer: {
+    historyApiFallback: true,
     static: {
-      directory: path.join(__dirname, 'build'),
+      directory: path.join(__dirname, 'public'),
     },
     compress: true,
     port: 3000,
