@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { AnimatePresence, motion } from 'framer-motion';
 
 // SVG icons to replace FontAwesome
@@ -93,11 +90,6 @@ export default function App() {
   const [usdAmount, setUsdAmount] = useState(10);
   const [ghsAmount, setGhsAmount] = useState(120);
   const [isPaystackLoaded, setIsPaystackLoaded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthReady, setIsAuthReady] = useState(false);
-  const [userId, setUserId] = useState(null);
-  const [db, setDb] = useState(null);
-  const [auth, setAuth] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', message: '', icon: '' });
 
@@ -107,50 +99,11 @@ export default function App() {
   const PAYSTACK_PUBLIC_KEY = 'pk_live_87c3c567301e82e5685926742d23cb2458d4a1ae';
   const WEBHOOK_URL = 'https://hook.eu2.make.com/pv8m1kitutexccwl1d1puc3u4rdno69p';
 
-  // Effect to initialize Firebase and Paystack.
+  // Effect to initialize Paystack.
   useEffect(() => {
     loadPaystackScript(() => {
       setIsPaystackLoaded(true);
     });
-
-    const initializeFirebase = async () => {
-      try {
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        if (!firebaseConfig) {
-          console.error("Firebase config is not defined.");
-          setIsLoading(false);
-          return;
-        }
-
-        const app = initializeApp(firebaseConfig);
-        const firestoreDb = getFirestore(app);
-        const firebaseAuth = getAuth(app);
-        setDb(firestoreDb);
-        setAuth(firebaseAuth);
-
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        if (initialAuthToken) {
-          await signInWithCustomToken(firebaseAuth, initialAuthToken);
-        } else {
-          await signInAnonymously(firebaseAuth);
-        }
-
-        onAuthStateChanged(firebaseAuth, (user) => {
-          if (user) {
-            setUserId(user.uid);
-          } else {
-            setUserId(null);
-          }
-          setIsAuthReady(true);
-          setIsLoading(false);
-        });
-      } catch (error) {
-        console.error("Firebase initialization or authentication failed:", error);
-        setIsLoading(false);
-      }
-    };
-
-    initializeFirebase();
   }, []);
 
   // Recalculates total cost based on the number of posts.
@@ -195,7 +148,7 @@ export default function App() {
 
   // Initiates the Paystack payment process and handles callbacks.
   const handlePaystackPayment = async () => {
-    if (!isPaystackLoaded || !songLink || !email || postCount < 10 || !isAuthReady) {
+    if (!isPaystackLoaded || !songLink || !email || postCount < 10) {
       setModalContent({ title: 'Error', message: 'Please fill out all fields and ensure the number of posts is at least 10.', icon: 'error' });
       setShowModal(true);
       return;
@@ -227,16 +180,6 @@ export default function App() {
             timestamp: new Date().toISOString(),
             status: 'paid',
           };
-
-          // Save data to Firestore database.
-          if (db && userId) {
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const promoRequestRef = doc(db, `/artifacts/${appId}/users/${userId}/promo-requests`, transactionRef);
-            await setDoc(promoRequestRef, promoData);
-            console.log('Data saved to Firestore.');
-          } else {
-            console.error("Firestore not initialized or user not authenticated. Data not saved.");
-          }
 
           // Send data to the Make.com webhook with retries.
           if (WEBHOOK_URL) {
@@ -292,14 +235,6 @@ export default function App() {
       setShowModal(true);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <h1 className="text-white text-2xl animate-pulse">Loading...</h1>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen text-gray-100 font-sans flex items-center justify-center p-4 bg-gradient-to-br from-gray-900 via-purple-900 to-pink-900 bg-size-200% animate-gradient-shift">
@@ -446,7 +381,7 @@ export default function App() {
           ) : (
             <motion.button
               onClick={handlePaystackPayment}
-              disabled={!isPaystackLoaded || !isAuthReady}
+              disabled={!isPaystackLoaded}
               className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 rounded-xl shadow-lg hover:from-purple-600 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
