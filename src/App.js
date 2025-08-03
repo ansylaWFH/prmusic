@@ -92,9 +92,7 @@ export default function App() {
 
   const DOLLAR_TO_GHS_RATE = 12;
   const POST_COST_USD = 1;
-  // Hard-coded public and private keys as requested.
   const PAYSTACK_PUBLIC_KEY = 'pk_live_87c3c567301e82e5685926742d23cb2458d4a1ae';
-  const PAYSTACK_PRIVATE_KEY = 'sk_live_943f8ba2fb112470655eee1f06c926667fa27081'; // WARNING: This is a security risk.
   const WEBHOOK_URL = 'https://hook.eu2.make.com/pv8m1kitutexccwl1d1puc3u4rdno69p';
 
   useEffect(() => {
